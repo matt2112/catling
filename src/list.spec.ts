@@ -104,4 +104,10 @@ describe('List', () => {
         .toArray(),
     ).toEqual(myList.chain(x => repeat(x).chain(add1)).toArray())
   })
+
+  it('constructs a list from an array', () => {
+    const myList = List.fromArray([1, 2, 3, 4])
+
+    expect(myList.toArray()).toEqual([1, 2, 3, 4])
+  })
 })

@@ -18,26 +18,36 @@ export interface List<T> extends Monoid<List<T>> {
   contains: (p: (item: T) => boolean) => boolean
 }
 
-export function List<T>(...items: T[]): List<T> {
+export interface ListFactory {
+  <T>(...items: T[]): List<T>
+  fromArray: <T>(items: T[]) => List<T>
+}
+
+const ListFactory = (<T>(...items: T[]): List<T> => {
   const inspect = () => `List(${items})`
-  const flatMap = <K>(fn) => List(...items).fold(List<K>())((acc, i) => acc.concat(fn(i)))
+  const flatMap = <K>(fn) =>
+    ListFactory(...items).fold(ListFactory<K>())((acc, i) => acc.concat(fn(i)))
 
   return {
     toArray: () => items,
     toString: inspect,
     inspect,
-    map: fn => List(...items.map(fn)),
-    filter: fn => List(...items.filter(fn)),
+    map: fn => ListFactory(...items.map(fn)),
+    filter: fn => ListFactory(...items.filter(fn)),
     length: () => items.length,
-    concat: list2 => List(...items, ...list2.toArray()),
+    concat: list2 => ListFactory(...items, ...list2.toArray()),
     flatMap,
     chain: flatMap,
     fold: initial => fn => items.reduce(fn, initial),
     head: () => items[0],
     headOption: () => Option(items[0]),
-    tail: () => List(...items.slice(1)),
-    empty: () => List(),
+    tail: () => ListFactory(...items.slice(1)),
+    empty: () => ListFactory(),
     find: p => Option(items.reduce((acc, curr) => (acc ? acc : p(curr) ? curr : acc), undefined)),
     contains: p => items.reduce((acc, curr) => (acc ? acc : p(curr)), false),
   }
-}
+}) as ListFactory
+
+ListFactory.fromArray = <T>(items: T[]) => ListFactory(...items)
+
+export const List = ListFactory
